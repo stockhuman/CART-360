@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Program Files (x86)\\Arduino\\tools\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**",
+                "${workspaceRoot}",
+                "${config:arduino.path}/hardware/tools/avr/avr/include",
+                "${config:arduino.path}/hardware/arduino/avr/cores/arduino",
+                "${config:arduino.path}/hardware/arduino/avr/libraries/EEPROM/src",
+                "${config:arduino.path}/hardware/tools/avr/lib/gcc/avr/4.9.2/include",
+                "${config:arduino.path}/hardware/tools/avr/lib/gcc/avr/4.9.2/include-fixed",
+                "C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include"
+            ],
+            "forcedInclude": [
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "__AVR_ATmega328P__",
+                "__AVR_ENHANCED__"
+            ],
+            "intelliSenseMode": "clang-x64",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.14.26428/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "browse": {
+                "path": [
+                    "${workspaceRoot}",
+                    "C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino",
+                    "C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include",
+                    "C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.2/include",
+                    "C:/Program Files (x86)/Arduino/hardware/arduino/avr/variants/standard"
+                ],
+                "limitSymbolsToIncludedHeaders": false,
+                "databaseFilename": ""
+            }
+        }
+    ],
+    "version": 4,
+    "C_Cpp.intelliSenseEngine": "Tag Parser"
+}
