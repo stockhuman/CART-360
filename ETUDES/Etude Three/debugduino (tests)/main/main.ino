@@ -21,20 +21,19 @@ int countNotes = 0; // counter for how many notes we have
 int mode = 0; // start at off
 int notes [MAX_NOTES]; // array to hold the notes played (for record/play mode)
 
-void l(String = "", String = "", String = "", String = ""); // for ease of debugging
 
-void l(String s, String s2) { Serial.print(s); Serial.println(s2); } // for ease of debugging
-void l(String s, int i) { Serial.print(s); Serial.println(i); } // for ease of debugging
-void l(int i) { Serial.println(i); } // for ease of debugging
+// for ease of debugging: these aare utility functions for nice logging
+void l(String = "", String = "", String = "", String = "");
+void l(String s, String s2) { Serial.print(s); Serial.println(s2); }
+void l(String s, int i) { Serial.print(s); Serial.println(i); }
+void l(int i) { Serial.println(i); }
 void l(String s, String s2, String s3, String s4) {
   Serial.print(s + ' ');
   Serial.print(s2 + ", ");
   Serial.print(s3 + ", ");
   Serial.println(s4 + '.');
 }
-
-void m () {
-
+void m () { // logs the current mode
   switch (mode)
   {
     case 0: Serial.println("Reset--"); break;
@@ -46,6 +45,14 @@ void m () {
       break;
   }
 }
+void int_array_to_string(int int_array[], int size_of_array)
+{
+  String returnstring = "";
+  for (int temp = 0; temp < size_of_array; temp++)
+    returnstring += String(int_array[temp]) + " ";
+  Serial.println(returnstring);
+}
+//  end debug methods
 
 void setup()
 {
@@ -63,7 +70,7 @@ void loop()
 
 void chooseMode() {
   int buttonState = digitalRead(BUTTON_MODE_PIN);
-  if (buttonState == 1) {
+  if (buttonState == 1) { // test if the mode switch button is pressed
     mode = (mode + 1) % 5; // increment the mode by one, and modulo-wrap it around to 0
     l("mode ", mode);
     m();
@@ -136,34 +143,38 @@ void live()
 
 void record()
 {
-  int sensedInput = readnote();
+  int sensedInput = readnote(); // capture the current note, if any
 
-  if (sensedInput > 10)                      // simple high-pass
+  if (sensedInput > 10) // simple high-pass
   {
     l("note read: ", sensedInput);
+
     // get the next place in the array to place a note,
-    // another artefact of the no-extra-vars rule
-    int nextAvailableCell = 0;
+    // another artefact of the no-extra-vars rule.
 
-    for (int i = 0; i < MAX_NOTES; i++)
+    // I initially used an iterator variable, but I saw that simply integrating
+    // my iterator with this nextAvailableCell var was more concise and expressive
+    for (int nextAvailableCell = 0; nextAvailableCell < MAX_NOTES; nextAvailableCell++)
     {
-
-      if (i == ( MAX_NOTES - 1 ))
+      // bail early if we're at the limit of the tune
+      if ( nextAvailableCell == ( MAX_NOTES - 1 ))
       {
-        l("done!");
+        l("MAX NOTES REACHED");
         // because this is cheaper than implementing a linked list every loop
         memset(notes, 0, sizeof(notes));
-        return; // leaving the nextAvailableCell value at zero
+        notes[0] = sensedInput; // write to the beggining of the array
+        l("Recorded: ", notes[0]);
+        return;
       }
 
-      if (notes[i] == 0) {
-        return; // stop when index value is uninitialized
+      // test if current note is uninitialised
+      if (notes[nextAvailableCell] == 0) {
+        l("Index ", nextAvailableCell);
+        notes[nextAvailableCell] = sensedInput;
+        l("Recorded: ", notes[nextAvailableCell]);
+        return;
       }
-      nextAvailableCell += 1;
     }
-    l("Recorded: ", sensedInput);
-    int_array_to_string(notes, sizeof(notes));
-    notes[nextAvailableCell] = sensedInput;
   }
 }
 
@@ -174,14 +185,23 @@ void play()
   int_array_to_string(notes, sizeof(notes));
   tone(BUZZER_PIN, notes[countNotes], duration);
   countNotes = (countNotes + 1) % MAX_NOTES;
+  l(countNotes);
 }
 
 
 void looper()
 {
   // Being limited to not create any additional global variables outside of
-  // these methods is proving to be quite the challenge
-  tone(BUZZER_PIN, notes[countNotes], duration);
+  // these methods is proving to be quite the challenge...
+
+  // captures the current time
+  unsigned long currentMillis = millis();
+  // bitmasks the long-cast-to-int for the last 4 bits (1111)
+  int noteToPlay = currentMillis & 0x8; // returning a number between 0 and 15
+  
+  l("note to play: ", noteToPlay);
+  l("played ", notes[noteToPlay]);
+  tone(BUZZER_PIN, notes[noteToPlay], duration);
   countNotes = (countNotes + 1) % MAX_NOTES;
 }
 
@@ -204,16 +224,8 @@ void playnote (int note) {
   l("played tone: ", note);
 }
 
-int readnote() {
+int readnote () {
   int in = analogRead(NOTE_IN_PIN);
-  delay(200);
+  delay(200); // debouncing
   return in;
-}
-
-void int_array_to_string(int int_array[], int size_of_array)
-{
-  String returnstring = "";
-  for (int temp = 0; temp < size_of_array; temp++)
-    returnstring += String(int_array[temp]) + " ";
-  Serial.println(returnstring);
 }
