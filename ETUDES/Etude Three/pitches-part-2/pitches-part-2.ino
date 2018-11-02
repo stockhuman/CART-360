@@ -1,7 +1,7 @@
 /**********************ETUDE 2 CART 360 2017*******************************
- * WELCOME! 
+ * WELCOME!
  * THE PURPOSE OF THIS EXERCISE IS TO DESIGN A VERY SIMPLE KEYBOARD (5 KEYS)
- * WHICH ALLOWS YOU TO PLAY LIVE, RECORD, AND PLAYBACK SINGLE NOTES (NO CHORDS). 
+ * WHICH ALLOWS YOU TO PLAY LIVE, RECORD, AND PLAYBACK SINGLE NOTES (NO CHORDS).
  * THERE WILL BE A BUTTON WHICH WHEN PRESSED WILL TAKE THE USER TO THE NEXT MODE:
  * THERE ARE 5 POSSIBLE MODES
  * 0 ==  reset    ==   led off == also resets
@@ -9,18 +9,30 @@
  * 2 ==  record   ==   led RED
  * 3 ==  play     ==   led GREEN
  * 4 ==  looper   ==   led PURPLE
- * 
- * ADDITIONALLY - WHEN THE USER CHANGES MODE, 
+ *
+ * ADDITIONALLY - WHEN THE USER CHANGES MODE,
  * THE RGB LED WILL CHANGE COLOR (ACCORDING TO THE SPECIFICATIONS)
 
  * PLEASE FOLLOW THE INSTRUCTIONS IN THE COMMENTS:
- * DO NOT ADD ANY MORE FUNCTION DEFINITIONS 
+ * DO NOT ADD ANY MORE FUNCTION DEFINITIONS
  * ONLY IMPLEMENT THE FUNCTION DEFINITIONS SUPPLIED
  * THERE IS NO NEED TO ADD ANY NEW VARIABLES OR CONSTANTS
  * PROVIDE COMMENTS FOR ANY OF THE CODE IMPLEMENTED
  * GOOD LUCK!
  */
 /**** CONSTANTS ********************************************************/
+
+#include "pitches.h"
+
+typedef struct {
+  int rawValue;
+  int note;
+} Association;
+
+const Association NOTE1 = { 1021, NOTE_C4 };
+const Association NOTE2 = { 928,  NOTE_D4 };
+const Association NOTE3 = { 486,  NOTE_G4 };
+const Association NOTE4 = { 83,   NOTE_E4 };
 
 #define BUTTON_MODE_PIN 2 // Button to change the mode
 
@@ -36,9 +48,9 @@
 #define MAX_NOTES 16
 
 // a constant for duration
-const int duration = 200;
+const int duration = 500;
 
-// constant for pin to output for buzzer 
+// constant for pin to output for buzzer
 #define BUZZER_PIN 3 // PWM
 
 /******** VARIABLES *****************************************************/
@@ -46,7 +58,7 @@ const int duration = 200;
 int countNotes = 0;
 int mode = 0; // start at off
 // array to hold the notes played (for record/play mode)
-int notes [MAX_NOTES]; 
+int notes [MAX_NOTES];
 
 /*************************************************************************/
 
@@ -59,10 +71,10 @@ void setup()
 }
 
 /**********************LOOP() DO NOT CHANGE *******************************
- * INSTRUCTIONS: 
+ * INSTRUCTIONS:
  * There is NO NEED to change the loop - it establishes the flow of the program
  * We call here 3 functions repeatedly:
- * 1: chooseMode(): this function will determine the mode that your program is in 
+ * 1: chooseMode(): this function will determine the mode that your program is in
  * based on if the button (linked to the BUTTON_MODE_PIN) was pressed
  * 2: setRGB(): will set the color of the RGB LED based on the value of the mode variable
  * 3: selectMode(): will determine which function to call based on the value of the mode variable
@@ -76,28 +88,28 @@ void loop()
 }
 /******************CHOOSEMODE(): IMPLEMENT *********************************
  * INSTRUCTIONS:
- * Read the value from the Button (linked to the BUTTON_MODE_PIN) and 
+ * Read the value from the Button (linked to the BUTTON_MODE_PIN) and
  * if is being pressed then change the mode variable.
  * REMEMBER:
- * mode == 0 is reset 
+ * mode == 0 is reset
  * mode == 1 is live
  * mode == 2 is record
  * mode == 3 is play
  * mode == 4 is loopMode
  * Every time the user presses the button, the program will go to the next mode,
- * once it reaches 4, it should go back to mode == 0. 
+ * once it reaches 4, it should go back to mode == 0.
  * (i.e. if mode ==2 and we press, then mode ==3) ...
 **************************************************************************/
 void chooseMode(){
   // capture the current button state
   int buttonState = digitalRead(BUTTON_MODE_PIN);
-  
+
   // test if the mode switch button is pressed
   if (buttonState == 1) {
     // increment the mode by one, and modulo-wrap it around to 0
     mode = (mode + 1) % 5;
     // debouncing without variables!
-    delay(250);
+    delay(200);
   }
 }
 
@@ -134,26 +146,26 @@ void setRGB()
   }
 }
 /**********************SELECTMODE() DO NOT CHANGE *******************************
- * INSTRUCTIONS: 
+ * INSTRUCTIONS:
  * There is NO NEED to change this function - it selects WHICH function should run based on the mode variable
  * There are 4 possibilities
  * 1: reset(): this function will reset any arrays etc, and will do nothing else
- * 2: live(): this function will play the corresponding notes 
- * to the user pressing the respective buttons. 
+ * 2: live(): this function will play the corresponding notes
+ * to the user pressing the respective buttons.
  * NOTE:: the notes played are NOT stored
- * 3: record(): this function will play the corresponding notes 
+ * 3: record(): this function will play the corresponding notes
  * to the user pressing the respective buttons
  * AND will STORE up to 16 consecutive notes in an array.
  * 4: play(): this function will playback any notes stored in the array that were recorded
  * in the previous mode
- * 5: loopMode(): this function will playback any notes stored in the array that were recorded, 
+ * 5: loopMode(): this function will playback any notes stored in the array that were recorded,
  * BUT unlike the previous mode, you can choose in which sequence the notes are played.
  * REQUIRED: only play notes from the array (no live stuff)
 
 ******************************************************************************/
 void selectMode()
 {
-  if(mode == 0) { 
+  if(mode == 0) {
     reset();
   }
   else if(mode == 1) {
@@ -162,12 +174,12 @@ void selectMode()
   else if(mode == 2) {
     record();
   }
-  
+
   else if(mode == 3) {
     play();
   }
-   
-   else if(mode == 4) {
+
+  else if(mode == 4) {
     looper();
   }
 }
@@ -184,7 +196,7 @@ void reset()
 }
 /******************LIVE(): IMPLEMENT **************************************
  * INSTRUCTIONS:
- * this function will play the corresponding notes 
+ * this function will play the corresponding notes
  * to the user pressing the respective buttons
  * NOTE:: the notes played are NOT stored
  * SO: you need read in the input from the analog input (linked to the button-resistor ladder combo)
@@ -192,13 +204,13 @@ void reset()
 **************************************************************************/
 void live()
 {
-  int note = analogRead(NOTE_IN_PIN);
+  int note = mapToNote(analogRead(NOTE_IN_PIN));
   delay(200); // debouncing
   tone(BUZZER_PIN, note, duration);
 }
 /******************RECORD(): IMPLEMENT **********************************
  * INSTRUCTIONS:
- * this function will play the corresponding notes 
+ * this function will play the corresponding notes
  * to the user pressing the respective buttons
  * AND will STORE up to 16 consecutive notes in an array.
  * SO:you need read in the input from the analog input (linked to the button-resistor ladder combo)
@@ -207,8 +219,8 @@ void live()
 **************************************************************************/
 void record()
 {
-  int sensedInput = analogRead(NOTE_IN_PIN); // capture the current note, if any
-  delay(150); // debouncing
+  int sensedInput = mapToNote(analogRead(NOTE_IN_PIN)); // capture the current note, if any
+  delay(200); // debouncing
 
   if (sensedInput > 10) { // simple high-pass
 
@@ -248,6 +260,7 @@ void record()
 **************************************************************************/
 void play()
 {
+  delay(100);
   tone(BUZZER_PIN, notes[countNotes], duration);
   countNotes = (countNotes + 1) % MAX_NOTES;
 }
@@ -270,9 +283,39 @@ void looper()
   unsigned long currentMillis = millis();
   // bitmasks the long-cast-to-int for the last 4 bits (1111)
   int noteToPlay = currentMillis & 0x8; // returning a number between 0 and 15
-  
+
   tone(BUZZER_PIN, notes[noteToPlay], duration);
   countNotes = (countNotes + 1) % MAX_NOTES;
+  delay(200);
 }
 
 /**************************************************************************/
+
+/****************** MAPTONOTE() [NEW] *************************************
+ * This function
+ * this function will playback any notes stored in the array that were recorded
+ * in the previous mode
+**************************************************************************/
+int mapToNote (int tone) {
+  int mappedNote = 0; // initialise return value to zero, just in case
+
+  // simple if statement as there are so few values to check for
+  if (tone <= NOTE1.rawValue + 2 && tone >= NOTE1.rawValue - 2) {
+    mappedNote = NOTE1.note;
+
+    // map the second button
+  } else if (tone <= NOTE2.rawValue + 2 && tone >= NOTE2.rawValue - 2) {
+    mappedNote = NOTE2.note;
+
+    // map the third button
+  } else if (tone <= NOTE3.rawValue + 2 && tone >= NOTE3.rawValue - 2) {
+    mappedNote = NOTE3.note;
+
+    // map the fourth button
+  } else if (tone <= NOTE4.rawValue + 2 && tone >= NOTE4.rawValue - 2) {
+    mappedNote = NOTE4.note;
+  }
+
+  // return a value, either mapped or zero
+  return mappedNote;
+}
