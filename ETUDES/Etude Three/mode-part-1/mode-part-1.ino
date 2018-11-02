@@ -20,6 +20,9 @@
  * PROVIDE COMMENTS FOR ANY OF THE CODE IMPLEMENTED
  * GOOD LUCK!
  */
+
+// SEE SHORT ANSWER AT THE BOTTOM
+ 
 /**** CONSTANTS ********************************************************/
 
 #define BUTTON_MODE_PIN 2 // Button to change the mode
@@ -276,3 +279,27 @@ void looper()
 }
 
 /**************************************************************************/
+
+
+
+/**
+ * the resistor ladder (keyboard), mode selector and what is occurring on the Arduino as a voltage.
+ * How does the input become audible sound?
+ * --
+ * 
+ * The resistor ladder functions as such:
+ * Much like a number represented in binary, each node in the ladder adds to those after it.
+ * Voltage travels through the ladder, with the output voltage ever smaller (following 1 / (I * R))
+ * as the resistors are arranged in series. When one presses a button, the circuit completes at that node,
+ * and current will flow through each resistor preceeding that node and ultimately end up in the Arduino.
+ * 
+ * With this we derive the proportional voltage drop over the Arduino's initial 5V out.
+ * By feeding these values as PWM duty cycles to the Arduino tone() function, one can produce the 'tone'
+ * associated to each resistor ladder. The function takes a frequency as an argument, and then modulates 
+ * an output signal that is easily reproduced in the diaphram of the piezo speaker.
+ * 
+ * The nature of the ladder makes it so that playing chords is impossible, as each node will close the circuit and 
+ * render following nodes inert, yet this is sometimes useful for holding a root note and quickly 
+ * jumping to notes closer to the voltage source on the ladder.
+ * 
+ */
