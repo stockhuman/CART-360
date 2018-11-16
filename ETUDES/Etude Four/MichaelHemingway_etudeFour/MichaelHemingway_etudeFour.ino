@@ -261,9 +261,11 @@ void reset()
 **************************************************************************/
 void live()
 {
-   // IMPLEMENT live()
-   offsetFrequency = getPhotoFrequency();
-   // output sound
+  int note = analogRead(NOTE_IN_PIN);
+  
+  offsetFrequency = getPhotoFrequency();
+  delay(200); // debouncing
+  tone(BUZZER_PIN, note, 100);
  
 }
 
