@@ -261,12 +261,13 @@ void reset()
 **************************************************************************/
 void live()
 {
-  int note = analogRead(NOTE_IN_PIN);
-  
-  offsetFrequency = getPhotoFrequency();
-  delay(200); // debouncing
-  tone(BUZZER_PIN, note, 100);
- 
+  int note = analogRead(NOTE_IN_PIN); // get current note
+  // simple filter for bogus values
+  if (note > 10) {
+    offsetFrequency = getPhotoFrequency();
+    delay(50); // debouncing
+    tone(BUZZER_PIN, note + offsetFrequency, 100); // play the note
+  }
 }
 
 /******************LOOPMODE(): DONE************************************
@@ -388,19 +389,25 @@ void recordWithDuration()
 **************************************************************************/
 void startUpTimer()
 {
-  //IMPLEMENT
-
+  activeNoteButton = true;
+  timePassed = 0; // resets the time passed
+  startTime = millis(); // ...and sets the new point for the timer to start from as the current millisecond. 
 }
+
 /******************UPDATETIMER(): IMPLEMENT *********************************
  * INSTRUCTIONS:
  * this function will update the current timer 
 **************************************************************************/
 void updateTimer()
 {
-
- //IMPLEMENT
-
+  /* The offset is maintained with each iteration of the timer as 
+   * the time start time is always moved ahead with the same millis() method.
+   * when this method is called, timepassed is = the millisecods elapsed 
+   * since the start timer method was called.
+   */
+  timePassed = millis() - startTime; 
 }
+
 /******************PLAYCURRENTNOTE(): IMPLEMENT *********************************
  * INSTRUCTIONS:
  * this function will play the current note being pressed in RecordDuration mode
@@ -409,9 +416,10 @@ void updateTimer()
 **************************************************************************/
 void playCurrentNote()
 {
-    //IMPLEMENT
-
+ int computedTone = testNote + averageOffsetFreq;
+ tone(BUZZER_PIN, computedTone, 100); // same as live()
 }
+
 /******************UPDATEARRAYSWITHNOTEANDTIMINGS(): IMPLEMENT *********************************
  * INSTRUCTIONS:
  * this function will handle the case where the note is no longer being pressed:
@@ -422,8 +430,20 @@ void playCurrentNote()
 **************************************************************************/
 void updateArraysWithNoteAndTimings()
 {
- //IMPLEMENT
+  // populates the countnotes poisition of the notes array with the recorded note
+  notes[countNotes] = testNote + averageOffsetFreq;
+  // and does the same with the recorded duration in the durations array.
+  durations[countNotes] = timePassed;
+
+  // resets the timer
+  startUpTimer();
+  // switches the active button boolean so as to be ready for the next note
+  activeNoteButton = false;
+
+  countNotes++;
+  if (countNotes > MAX_NOTES) countNotes = 0; // ++countnotes and wraps to zero if over max
 }
+
 /******************GETPHOTOFREQUENCY(): IMPLEMENT *********************************
  * INSTRUCTIONS:
  * this function will get input from the photocell
@@ -431,7 +451,8 @@ void updateArraysWithNoteAndTimings()
 **************************************************************************/
 int getPhotoFrequency()
 {
-  //IMPLEMENT
+  // scales the analog value to an appropriate PWM range
+  return map(analogRead(PHOTO_PIN), 0, 1023, 0, 255);
 }
 
 /******************GETRUNNINGAVERAGE(): IMPLEMENT *********************************
@@ -441,7 +462,27 @@ int getPhotoFrequency()
 **************************************************************************/
 int getRunningAverage()
 {
- //IMPLEMENT
+  int photoRead = offsetFrequency; // hold the current average
+
+  nextCount = (nextCount++) % RUNNING_SAMPLES // wrap index variable to zero
+  // set the position ahead of nexcount in the running buffer array to the 
+  // offset frequency we just read
+  runningAverageBuffer[(nextCount + 1] = photoRead;
+
+  int _runningAverage = 0; // temp variable
+
+  // sum the captured photocell variables into an aggregate
+  for (int i = 0; i < RUNNING_SAMPLES; ++i)
+  {
+    _runningAverage += runningAverageBuffer[i];
+  }
+
+  // ... and divide by the number of samples to normalize it
+  _runningAverage /= RUNNING_SAMPLES;
+
+  delay(10); // stability debouncing
+
+  return _runningAverage; // return said average
 
 }
 /******************COLORLED(): IMPLEMENT *********************************
@@ -451,6 +492,9 @@ int getRunningAverage()
 **************************************************************************/
 void colorLED(int col)
 {
+  // Frequency range is pretty broad including the photocell.
+  // I"ve elected to keep it to the ADC mapping.
+  col = map(col, 0, 1023, 0, 255); // pass sane values to the LED
   analogWrite(LED_PIN_R, 0);   // Turn on the LED -R
   analogWrite(LED_PIN_G, col);   // Turn on the LED -G
   analogWrite(LED_PIN_B, 0);   // Turn on the LED -B
@@ -467,58 +511,16 @@ void colorLED(int col)
 **************************************************************************/
 void playWithDuration()
 {
-  //IMPLEMENT
-}
-
-/******************PLAY(): SOLUTION: ETUDE_2 ************************************
- * INSTRUCTIONS:
- * this function will playback any notes stored in the array that were recorded
- * in the previous mode
- * SO: you need to go through the array of values (be careful - the user may not have put in MAX_NOTES)
- * READ each value IN ORDER
- * AND output each note to the buzzer using the tone() function
- * ALSO: as long as we are in this mode, the notes are played over and over again
- * BE CAREFUL: make sure you allow for the user to get to another mode from the mode button...
-**************************************************************************/
-void play()
-{
- 
-  for(int i=0; i<countNotes;i++)
+  for (int i = 0; i < countNotes; i++)
   {
     /* https://www.arduino.cc/en/Reference/Tone */
-    tone(BUZZER_PIN, notes[i], duration);
-    delay(duration); // wait for tone to finish
+    tone(BUZZER_PIN, notes[i], durations[i]);
+    colorLED(notes[i]); // light up the LED with an intensity based on tone hz
+    //delay(durations[i]); // wait for tone to finish (???)
     //check if mode button is pressed
-    if(digitalRead(BUTTON_MODE_PIN) ==HIGH){break;}
-  }
-}
-/******************RECORD(): SOLUTION_ETUDE_2 **********************************
- * INSTRUCTIONS:
- * this function will play the corresponding notes 
- * to the user pressing the respective buttons
- * AND will STORE up to 16 consecutive notes in an array.
- * SO:you need read in the input from the analog input (linked to the button-resistor ladder combo)
- * AND - output the note to the buzzer using the tone() function
- * THEN store that note in the array  - BE CAREFUL - you can only allow for up to MAX_NOTES to be stored
-********************************************************************************/
-void record()
-{
- 
-  if(countNotes < MAX_NOTES)
-  {
-    // add a note to the array if have a value
-    int testNote = analogRead(NOTE_IN_PIN);
-    if(testNote>0)
+    if (digitalRead(BUTTON_MODE_PIN) == HIGH)
     {
-      notes[countNotes] = testNote; // possible vals?
-      tone(BUZZER_PIN, notes[countNotes], duration);
-      delay(duration); // wait for tone to finish
-      countNotes++;
-      delay(100);
-      
-      
+      break;
     }
-    
   }
 }
-/*********************************************************************************/
