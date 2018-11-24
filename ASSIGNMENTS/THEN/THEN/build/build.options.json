@@ -1,0 +1,11 @@
+{
+  "additionalFiles": "\\Ansiterm.h,\\build\\preproc\\ctags_target_for_gcc_minus_e.cpp,\\build\\sketch\\THEN.ino.cpp,\\debug.h",
+  "builtInLibrariesFolders": "C:\\Program Files (x86)\\Arduino\\libraries",
+  "customBuildProperties": "build.path=c:\\Users\\Mike\\Desktop\\THEN\\build,build.warn_data_percentage=75,runtime.tools.mkspiffs.path=C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\mkspiffs\\0.2.0,runtime.tools.mkspiffs-0.2.0.path=C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\mkspiffs\\0.2.0,runtime.tools.esptool.path=C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\esptool\\0.4.13,runtime.tools.esptool-0.4.13.path=C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\esptool\\0.4.13,runtime.tools.xtensa-lx106-elf-gcc.path=C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\1.20.0-26-gb404fb9-2,runtime.tools.xtensa-lx106-elf-gcc-1.20.0-26-gb404fb9-2.path=C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\1.20.0-26-gb404fb9-2",
+  "fqbn": "esp8266:esp8266:d1:CpuFrequency=80,VTable=flash,FlashSize=4M1M,LwIPVariant=v2mss536,Debug=Disabled,DebugLevel=None____,FlashErase=none,UploadSpeed=921600",
+  "hardwareFolders": "C:\\Program Files (x86)\\Arduino\\hardware,C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages",
+  "otherLibrariesFolders": "C:\\Users\\Mike\\Documents\\Arduino\\libraries",
+  "runtime.ide.version": "10807",
+  "sketchLocation": "c:\\Users\\Mike\\Desktop\\THEN\\THEN.ino",
+  "toolsFolders": "C:\\Program Files (x86)\\Arduino\\tools-builder,C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr,C:\\Users\\Mike\\AppData\\Local\\Arduino15\\packages"
+}
