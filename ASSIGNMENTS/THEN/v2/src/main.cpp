@@ -49,7 +49,7 @@ elapsedMillis msecs;
 
 void setup()
 {
-  Serial.begin(9600); // Debug w/ PC
+  Serial.begin(115200);  // Debug w/ PC
   Serial1.begin(115200); // Communication with ESP2688
 
   AudioMemory(60);
@@ -78,12 +78,12 @@ extern void stopPlaying();
 void loop() {
 
   // Send bytes from ESP8266 to computer
-  if (Serial1.available()) {
+  if (Serial1.available() > 0) {
     Serial.write(Serial1.read());
   }
 
   // Send bytes from computer back to ESP8266
-  if (Serial.available()) {
+  if (Serial.available() > 0) {
     Serial1.write(Serial.read());
   }
 
