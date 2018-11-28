@@ -4,7 +4,7 @@
 const char* ssid = "GentriFi";
 const char* password = "Yeezy2020";
  
-int ledPin = 13; // GPIO13, labeled on WeMos as D7
+int ledPin = 13; // GPIO13, labeled on WeMos as D7. pin 16 is the built-in led
 WiFiServer server(80);
  
 void setup() {
