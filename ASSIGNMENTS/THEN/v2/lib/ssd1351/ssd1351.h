@@ -97,9 +97,14 @@ template <typename C, typename B, int W = 128, int H = 128>
 class SSD1351 : public Print {
 public:
 	SSD1351(
+		// uint8_t _cs = 10,
+		// uint8_t _dc = 15,
+		// uint8_t _reset = 14,
+		// uint8_t _mosi=11,
+		// uint8_t _sclk=13
 		uint8_t _cs = 10,
 		uint8_t _dc = 15,
-		uint8_t _reset = 14,
+		uint8_t _reset = 20,
 		uint8_t _mosi=11,
 		uint8_t _sclk=13
 	) : cs(_cs), dc(_dc), reset(_reset), mosi(_mosi), sclk(_sclk) {}
@@ -111,13 +116,13 @@ public:
 		// Only size and color depth are settable - everything else is hardcoded.
 
 		// verify SPI pins are valid;
-		if ((mosi == 11 || mosi == 7) && (sclk == 13 || sclk == 14)) {
+		// if ((mosi == 11 || mosi == 7) && (sclk == 13 || sclk == 14)) {
 			SPI.setMOSI(mosi);
 			SPI.setSCK(sclk);
-		} else {
-			Serial.println("SPI pins are invalid.");
-			return;
-		}
+		// } else {
+		// 	Serial.println("SPI pins are invalid.");
+		// 	return;
+		// }
 
 		SPI.begin();
 
