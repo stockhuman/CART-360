@@ -84,8 +84,12 @@ void loop() {
     value = OFF;
   }
 
-// Set ledPin according to the request
-//digitalWrite(ledPin, value);
+  if (request.indexOf("/bitcrush") != -1) {
+    Serial.println("b");
+  }
+
+  // Set ledPin according to the request
+  // digitalWrite(ledPin, value);
 
   // Return the response
   client.println("HTTP/1.1 200 OK");
