@@ -9,46 +9,46 @@
 #define SDCARD_SCK_PIN 14
 
 // Audio IO
-// AudioOutputI2S i2s_out;
-// AudioInputAnalogStereo adc_in;
-// AudioConnection audioL(adc_in, 0, i2s_out, 0);
-// AudioConnection audioR(adc_in, 1, i2s_out, 1);
+AudioInputAnalogStereo adc_in;
+AudioOutputI2S i2s_out;
 
-// GUItool: begin automatically generated code
-AudioInputAnalogStereo adc_in;  //xy=62,267.3666687011719
-AudioFilterBiquad filterR;      //xy=254.36666870117188,371.3666687011719
-AudioFilterBiquad filterL;      //xy=269.3666687011719,140.36666870117188
-AudioEffectFreeverb fx_reverbL; //xy=464.3666687011719,41.366668701171875
-AudioEffectDelay fx_delayL;     //xy=474.3666687011719,134.36666870117188
-AudioEffectDelay fx_delayR;     //xy=479.3666687011719,486.3666687011719
-AudioEffectFreeverb fx_reverbR; //xy=488.3666687011719,366.3666687011719
-AudioMixer4 mixerR;             //xy=693.36669921875,342.3666687011719
-AudioMixer4 mixerL;             //xy=695.36669921875,205.36666870117188
-AudioOutputI2S i2s_out;         //xy=920.4334716796875,265.5697326660156
-AudioConnection patchCord1(adc_in, 0, mixerL, 0);
-AudioConnection patchCord2(adc_in, 0, filterL, 0);
-AudioConnection patchCord3(adc_in, 1, mixerR, 0);
-AudioConnection patchCord4(adc_in, 1, filterR, 0);
-AudioConnection patchCord5(filterR, fx_delayR);
-AudioConnection patchCord6(filterR, fx_reverbR);
-AudioConnection patchCord7(filterL, fx_delayL);
-AudioConnection patchCord8(filterL, fx_reverbL);
-AudioConnection patchCord9(fx_reverbL, 0, mixerL, 1);
-AudioConnection patchCord10(fx_delayL, 0, mixerL, 2);
-AudioConnection patchCord11(fx_delayR, 0, mixerR, 2);
-AudioConnection patchCord12(fx_reverbR, 0, mixerR, 1);
-AudioConnection patchCord13(mixerR, 0, i2s_out, 1);
-AudioConnection patchCord14(mixerL, 0, i2s_out, 0);
-// GUItool: end automatically generated code
+// Audio Filters
+AudioFilterBiquad filterL;
+AudioFilterBiquad filterR;
+AudioMixer4 mixerLR; // to pseudo-mono
 
 // Audio Effects
+AudioEffectDelay fx_delay;
+AudioEffectFreeverb fx_reverb;
+AudioEffectBitcrusher fx_bitcrusher;
+
+int fx_bits = 16;
+
+// Last leg mixer
+AudioMixer4 mixer;
+
+AudioConnection AudioIn_L(adc_in, 0, filterL, 0);
+AudioConnection AudioIn_R(adc_in, 1, filterR, 0);
+AudioConnection MixerMono_L(filterL, 0, mixerLR, 0);
+AudioConnection MixerMono_R(filterR, 0, mixerLR, 1);
+AudioConnection FXIn_0(mixerLR, fx_bitcrusher);
+AudioConnection FXIn_1(mixerLR, fx_delay);
+AudioConnection FXIn_2(mixerLR, fx_reverb);
+AudioConnection FXOut_0(fx_delay, 0, mixer, 1);
+AudioConnection FXOut_1(fx_reverb, 0, mixer, 0);
+AudioConnection FXOut_2(fx_bitcrusher, 0, mixer, 2);
+AudioConnection AudioOut_L(mixer, 0, i2s_out, 0);
+AudioConnection AudioOut_R(mixer, 0, i2s_out, 1);
+// debug
+// AudioConnection AudioOutDEBUG_L(adc_in, 0, i2s_out, 0);
+// AudioConnection AudioOutDEBUG_R(adc_in, 1, i2s_out, 1);
 
 // SD card playback
 AudioPlaySdWav audioSD;
 AudioRecordQueue queue;
-AudioConnection patch_queue(adc_in, 0, queue, 0);
-AudioConnection patch_SDOutL(audioSD, 0, i2s_out, 0);
-AudioConnection patch_SDOutR(audioSD, 0, i2s_out, 1);
+AudioConnection AudioSDIn(mixerLR, queue);
+AudioConnection AudioSDOut_L(audioSD, 0, mixerLR, 2);
+AudioConnection AudioSDOut_R(audioSD, 1, mixerLR, 3);
 
 // SD Card variables
 unsigned long ChunkSize = 0L;
@@ -66,7 +66,7 @@ unsigned long NumSamples = 0L;
 byte byte1, byte2, byte3, byte4;
 
 // Additional recording variables
-int mode = 0; // 0:
+int mode = 0;
 File frec;
 elapsedMillis msecs;
 
@@ -77,32 +77,48 @@ void setup()
   Serial.begin(115200);  // Debug w/ PC
   Serial1.begin(115200); // Communication with ESP2688
 
+	// await signal from ESP
+	// while(!Serial1.available()){
+	// 	byte startCommand = 'R'; // for ready
+	// 	byte incomingByte = Serial1.read();
+	// 	if (startCommand == incomingByte) {
+	// 		Serial.println("ESP Ready");
+	// 		break;
+	// 	}
+	// }
+	AudioNoInterrupts();
+
   // Audio Effects
-  fx_reverbL.roomsize(0.5); // Seconds, not millis
-  fx_reverbL.damping(0.3);
-  fx_reverbR.roomsize(0);
-  fx_reverbR.damping(1);
+  fx_reverb.roomsize(0.3); // Seconds, not millis
+  fx_reverb.damping(0.2);
 
-  fx_delayL.delay(0, 10); // channel, millis
-  fx_delayR.delay(0, 0);    // channel, millis
-  fx_delayL.disable(2); // disables taps
+  fx_delay.delay(0, 0); // channel, millis
+  fx_delay.delay(0, 0);  // channel, millis
 
-  //set xbitDepth to 16 and xsampleRate to 44100 for passthru
-  // bitcrusher.bits(16); // passthrough
-  // ampL.gain(0.2);
-  // ampR.gain(0.2);
-  filterR.setLowpass(0, 700);
-  filterL.setLowpass(0, 900);
+	// for(uint8_t i = 1; i < 6; i++)
+	// {
+	// 	fx_delay.disable(i); // disables taps
+	// }
 
-  mixerL.gain(0, 0);
-  mixerL.gain(1, 1);
-  mixerL.gain(2, 0);
 
-  mixerR.gain(0, 0);
-  mixerR.gain(1, 0.5);
-  mixerR.gain(2, 0.5);
+  // //set xbitDepth to 16 and xsampleRate to 44100 for passthru
+  fx_bitcrusher.bits(fx_bits); // passthrough
+	fx_bitcrusher.sampleRate(44100);
 
-  // AudioInterrupts();
+  filterR.setLowpass(0, 2500);
+  filterL.setLowpass(0, 2500);
+
+  mixerLR.gain(0, 0.4);
+  mixerLR.gain(1, 0.4);
+  mixerLR.gain(2, 0.5);
+  mixerLR.gain(3, 0.5);
+
+  // // final mixer
+  mixer.gain(0, 0.8);
+  mixer.gain(1, 0.8);
+  mixer.gain(2, 0.8);
+
+  AudioInterrupts();
   AudioMemory(60);
 
   // SD Card
@@ -137,7 +153,7 @@ void controlGrain(int, float);
 
 void loop() {
   _loop_interactionWifi();
-  _loop_interactionSD();
+ // _loop_interactionSD();
 }
 
 
@@ -146,7 +162,7 @@ void _loop_interactionSD() {
   if (Serial.available() > 0)
   {
     // read the incoming byte:
-    byte incomingByte = Serial.read();
+    byte incomingByte = Serial.peek();
     // Respond to button presses
     if (incomingByte == '1')
     {
@@ -156,6 +172,8 @@ void _loop_interactionSD() {
         stopPlaying();
       if (mode == 0)
         startRecording();
+
+			Serial.read();
     }
     if (incomingByte == '2')
     {
@@ -165,6 +183,8 @@ void _loop_interactionSD() {
         stopRecording();
       if (mode == 2)
         stopPlaying();
+
+      Serial.read();
     }
     if (incomingByte == '3')
     {
@@ -174,6 +194,8 @@ void _loop_interactionSD() {
         stopRecording();
       if (mode == 0)
         startPlaying();
+
+      Serial.read();
     }
   }
   if (mode == 1)
@@ -184,17 +206,18 @@ void _loop_interactionSD() {
 
 void _loop_interactionWifi() {
   // Send bytes from ESP8266 to computer
-  if (Serial1.available() > 0)
-  {
-    Serial.write(Serial1.read());
-  }
+  // if (Serial1.available() > 0)
+  // {
+  //   Serial.write(Serial1.read());
+  // }
 
   // Send bytes from computer back to ESP8266
-  if (Serial.available() > 0)
+  if (Serial1.available() > 0)
   {
-    Serial1.write(Serial.read());
+    String s = Serial1.readString();
+    Serial1.println(s);
     // DEBUG
-    String s = Serial.readString();
+
     if (s.startsWith("m")) {
       String c = s.substring(1, 2);
       int channel = c.toInt();
@@ -204,11 +227,18 @@ void _loop_interactionWifi() {
       Serial.println("gain received -->");
       controlGrain(channel, gain);
     }
-
+		// bitcrusher fx
+    if (s.startsWith("b")) {
+      String c = s.substring(1, 3);
+      int bits = c.toInt();
+			Serial.println(bits);
+      Serial.println("bitcrush received -->");
+      fx_bitcrusher.bits(bits);
+    }
   }
 }
 
 void controlGrain (int channel, float value) {
   // channel must be between 0 and 3
-  mixerL.gain(channel, value);
+  mixerLR.gain(channel, value/10);
 }
