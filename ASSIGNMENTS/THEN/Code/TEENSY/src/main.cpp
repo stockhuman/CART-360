@@ -1,3 +1,10 @@
+/**
+ * Please refer to the visual documentation of this project
+ * and the Teensy audio library to better understand this code.
+ *
+ *
+ */
+
 #include <Audio.h>
 #include <SD.h>
 #include <SD_t3.h>
@@ -86,7 +93,7 @@ void setup()
 	// 		break;
 	// 	}
 	// }
-	AudioNoInterrupts();
+	AudioNoInterrupts(); // Disables hardware interrupts, allowing more than one parameter change at once.
 
   // Audio Effects
   fx_reverb.roomsize(0.3); // Seconds, not millis
@@ -118,7 +125,7 @@ void setup()
   mixer.gain(1, 0.8);
   mixer.gain(2, 0.8);
 
-  AudioInterrupts();
+  AudioInterrupts(); // reinstates the interrups, which only allow one CPU blocking instruction per cycle.
   AudioMemory(60);
 
   // SD Card
@@ -126,7 +133,7 @@ void setup()
   SPI.setSCK(SDCARD_SCK_PIN);
   if (!(SD.begin(SDCARD_CS_PIN)))
   {
-    // stop here, but print a message repetitively
+    // stop here, but print a message
     while (!(SD.begin(SDCARD_CS_PIN)))
     {
       Serial.println("Unable to access the SD card");
@@ -144,16 +151,14 @@ extern void startPlaying();
 extern void stopPlaying();
 
 // WiFi control functions
-
-
 // foward declarations for the loop
 void _loop_interactionSD();
 void _loop_interactionWifi();
 void controlGrain(int, float);
 
 void loop() {
-  _loop_interactionWifi();
- // _loop_interactionSD();
+  _loop_interactionWifi(); // just listen for messages from the NodeMCU
+ // _loop_interactionSD(); // disabled as per the noise described in sd_card.cpp
 }
 
 
@@ -205,19 +210,16 @@ void _loop_interactionSD() {
 }
 
 void _loop_interactionWifi() {
-  // Send bytes from ESP8266 to computer
-  // if (Serial1.available() > 0)
-  // {
-  //   Serial.write(Serial1.read());
-  // }
-
   // Send bytes from computer back to ESP8266
+  // and bytes from ESP to computer
   if (Serial1.available() > 0)
   {
     String s = Serial1.readString();
     Serial1.println(s);
     // DEBUG
 
+    // Gain was untested from the demo, and was thus not included
+    // NOTE: this is effectively very similar code to what is on the ESP
     if (s.startsWith("m")) {
       String c = s.substring(1, 2);
       int channel = c.toInt();
@@ -227,6 +229,7 @@ void _loop_interactionWifi() {
       Serial.println("gain received -->");
       controlGrain(channel, gain);
     }
+
 		// bitcrusher fx
     if (s.startsWith("b")) {
       String c = s.substring(1, 3);

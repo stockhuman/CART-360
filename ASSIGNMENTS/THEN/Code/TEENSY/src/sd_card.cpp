@@ -1,3 +1,11 @@
+/**
+ * Audio recording to built-in Teensy SD card via Paul S. of PJRC fame.
+ * The following functions were not demonstrated in the demo due to high noise during playback
+ * and audio artefacting.
+ * I have added the majority of the comments
+ */
+
+// dependency graph reolves this away, not to worry about redundancy.
 #include <Audio.h>
 #include <SD.h>
 #include <SD_t3.h>
@@ -5,7 +13,7 @@
 #include <SerialFlash.h>
 #include <Wire.h>
 
-// SD Card variables
+// SD Card variables (declared in main.cpp)
 extern unsigned long ChunkSize;
 extern unsigned long Subchunk1Size;
 extern unsigned int AudioFormat;
@@ -30,6 +38,7 @@ extern AudioRecordQueue queue;
 void startRecording()
 {
   Serial.println("startRecording");
+  // all files must be all caps, and under 8 characters long before extension (DOS, basically)
   if (SD.exists("RECORD.WAV"))
   {
     SD.remove("RECORD.WAV");
@@ -43,22 +52,23 @@ void startRecording()
   }
 }
 
+
 void continueRecording()
 {
-
   if (queue.available() >= 2)
   {
-    byte buffer[512];
-    memcpy(buffer, queue.readBuffer(), 256);
-    queue.freeBuffer();
+    byte buffer[512]; // initialize a byte array buffer
+    memcpy(buffer, queue.readBuffer(), 256); // copy the que to the buffer
+    queue.freeBuffer(); // flush queue halfway (perf optimisation)
     memcpy(buffer + 256, queue.readBuffer(), 256);
     queue.freeBuffer();
     // write all 512 bytes to the SD card
     frec.write(buffer, 512);
-    recByteSaved += 512;
+    recByteSaved += 512; // used in SD card fsize tally
   }
 }
 
+// A series of metadata bitmasks to create the filesize, format and name of the file in header
 void writeOutHeader()
 { // update WAV header with final filesize/datasize
 
@@ -134,6 +144,7 @@ void writeOutHeader()
   Serial.println(Subchunk2Size);
 }
 
+// Writes out the last of the queue and creates the file
 void stopRecording()
 {
   Serial.println("stopRecording");
@@ -152,6 +163,7 @@ void stopRecording()
   mode = 0;
 }
 
+// reads from SD card. NOTE: terrible audio glitches :/
 void startPlaying()
 {
   Serial.println("startPlaying");
@@ -159,6 +171,7 @@ void startPlaying()
   mode = 2;
 }
 
+// stops the file, if playing
 void stopPlaying()
 {
   Serial.println("stopPlaying");

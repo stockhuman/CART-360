@@ -1,5 +1,18 @@
+/**
+ * This code is to be uploaded to the NodeMCU module,
+ * or adapted for use on the ESP directly.
+ * --
+ * For future note: connectivity should be done via
+ * a) An app with direct communication to the MCU
+ * b) automatic pairing via a phone hotspot (ask user to set up a predetermined hotspot,
+ * negotiate broader network credentials from there)
+ * c) local network (as is curretly configured, then input data so to connect to actual internet)
+ *
+ * Curretly a Serial connection
+ * Base code via
+ * https://www.instructables.com/id/Quick-Start-to-Nodemcu-ESP8266-on-Arduino-IDE/
+ */
 #include <ESP8266WiFi.h>
-// Base code via https://www.instructables.com/id/Quick-Start-to-Nodemcu-ESP8266-on-Arduino-IDE/
 
 #define ledPin BUILTIN_LED
 
@@ -13,13 +26,15 @@
 #endif
 
 
-const char* ssid = "GentriFi";
-const char* password = "Yeezy2020";
+const char* ssid = "XXXXXXXXXXXXXXXXXX"; // WiFi Name
+const char* password = "XXXXXXXXXXXXXX"; // WiFi Password
 
-
+// Start wifi server (ESP is now an AP)
 WiFiServer server(80);
 
 void setup() {
+  // Serial line to the Teensy
+  // NOTE: Serial tx/rx pins mirror USB line
   Serial.begin(115200);
   delay(10);
 
@@ -118,92 +133,82 @@ void loop() {
   delay(1);
   Serial.println("Client disonnected");
   Serial.println("");
-
 }
 
-// #include <ESP8266WiFi.h>
-// #include <WiFiClient.h>
-// #include <ESP8266WebServer.h>
-// #include <WebSocketsServer.h>
-// #include <Hash.h>
+void loop() {
+  // Check if a client has connected
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
 
-// // Replace with your network credentials
-// const char *ssid = "ConcordiaUniversity";
-// const char *password = "<YOUR WIFI PASSWORD>";
+  // Wait until the client sends some data
+  Serial.println("new client");
+  while (!client.available()) {
+    delay(1);
+  }
 
-// WebSocketsServer webSocket = WebSocketsServer(81);
-// ESP8266WebServer server(80); // instantiate server at port 80 (http port)
+  // Read the first line of the request
+  String request = client.readStringUntil('\r');
+  Serial.println(request);
+  client.flush();
 
-// String page = "";
-// int LEDPin = LED_BUILTIN;
+  /**
+   * NOTE: in my rush to accomplish this interaction whilst sick,
+   * the original code was lost.
+   * The code below is NOT what was running during the final presentation,
+   * although it illustrates the concept.
+   */
+  int value = OFF;
+  if (request.indexOf("/LED=ON") != -1) {
+    digitalWrite(ledPin, ON);
+    value = ON;
+  }
+  if (request.indexOf("/LED=OFF") != -1) {
+    digitalWrite(ledPin, OFF);
+    value = OFF;
+  }
 
-// void setup(void)
-// {
-//   //the HTML of the web page
-//   page = "<h1>Simple NodeMCU Web Server</h1><p><a href=\"LEDOn\"><button>ON</button></a>&nbsp;<a href=\"LEDOff\"><button>OFF</button></a></p>";
-//   //make the LED pin output and initially turned off
-//   pinMode(LEDPin, OUTPUT);
-//   digitalWrite(LEDPin, LOW);
+  if (request.indexOf("/bitcrush") != -1) {
+    Serial.println("b");
+  }
 
-//   delay(1000);
+  // Set ledPin according to the request
+  // digitalWrite(ledPin, value);
 
-//   Serial.begin(115200);
-//   WiFi.begin(ssid, password); // begin WiFi connection
-//   Serial.println("");
+  // Return the response
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/html");
+  client.println(""); //  do not forget this one
 
-//   // Wait for connection
-//   while (WiFi.status() != WL_CONNECTED)
-//   {
-//     delay(500);
-//     Serial.print(".");
-//   }
+  client.println("<!DOCTYPE HTML>");
+  client.println("<html><head><meta charset='utf-8'><meta "
+                 "http-equiv='X-UA-Compatible' content='IE=edge'>");
+  client.println("<meta name='viewport' content='width=device-width, "
+                 "initial-scale=1'>"); // uses lit 🔥 css framework
+  client.println("<link rel=\"stylesheet\" "
+                 "href=\"https://cdn.jsdelivr.net/npm/@ajusa/lit@latest/dist/"
+                 "lit.css\" />");
+  client.println("</head><body class='c'>");
+  // end </head>
 
-//   Serial.println("");
-//   Serial.print("Connected to ");
-//   Serial.println(ssid);
-//   Serial.print("IP address: ");
-//   Serial.println(WiFi.localIP());
+  client.print("Led pin is now: ");
 
-//   server.on("/", []() {
-//     server.send(200, "text/html", page);
-//   });
+  if (value == ON) {
+    client.print("On");
+  } else {
+    client.print("Off");
+  }
+  client.println("<br><br>");
+  client.println(
+      "<a href=\"/LED=ON\"\"><button class='btn'>Turn On </button></a>");
+  client.println("<a href=\"/LED=OFF\"\"><button class='btn'>Turn Off "
+                 "</button></a><br />");
+  client.println("</body></html>");
 
-//   server.on("/LEDOn", []() {
-//     server.send(200, "text/html", page);
-//     digitalWrite(LEDPin, HIGH);
-//     delay(1000);
-//   });
+  delay(1);
+  Serial.println("Client disonnected");
+  Serial.println("");
+}
 
-//   server.on("/LEDOff", []() {
-//     server.send(200, "text/html", page);
-//     digitalWrite(LEDPin, LOW);
-//     delay(1000);
-//   });
-
-//   server.begin();
-//   webSocket.begin();
-//   webSocket.onEvent(webSocketEvent);
-
-//   Serial.println("Web server started!");
-// }
-
-// void loop(void)
-// {
-//   webSocket.loop();
-//   server.handleClient();
-//   if (Serial.available() > 0)
-//   {
-//     char c[] = {(char)Serial.read()};
-//     webSocket.broadcastTXT(c, sizeof(c));
-//   }
-// }
-
-// void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
-// {
-//   if (type == WStype_TEXT)
-//   {
-//     for (int i = 0; i < length; i++)
-//       Serial.print((char)payload[i]);
-//     Serial.println();
-//   }
-// }
+// missing functions from final: renderpage() and parseurl()
