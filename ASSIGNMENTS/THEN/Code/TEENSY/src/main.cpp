@@ -126,7 +126,7 @@ void setup()
   mixer.gain(2, 0.8);
 
   AudioInterrupts(); // reinstates the interrups, which only allow one CPU blocking instruction per cycle.
-  AudioMemory(60);
+  AudioMemory(60); // dedicate 60 blocks of memory to the audio objects
 
   // SD Card
   SPI.setMOSI(SDCARD_MOSI_PIN);
