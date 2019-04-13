@@ -36,7 +36,7 @@ The original plan (as noted in comments in the ESP8266 code) was to have the wif
 I should note that the screen displayed in the schematic was not the one presented, and the arduino Uno used to drive the current oled is absent; this is due to my unfortunate frying of the original 4 pin OLED I intended to use. The only other screen I had drew too much power (and had trouble interfacing) with the ESP and Teensy.
 
 ### MISO
-I'd like to think I learned from and enjoyed this class the most out of my Concordia experience. I've done little circuit stuff (and occasionally taking apart old hardware) as a hobby for a while, but this has given both the knowledge and the motivation to go for a few more ambitious projects that I'd formerly not konwn where to dtart with. My mastery of audio design with regards to chip building has improved, and I think I'm a little wiser to circuits and conecting ground to power. :)
+I'd like to think I learned from and enjoyed this class the most out of my Concordia experience. I've done little circuit stuff (and occasionally taking apart old hardware) as a hobby for a while, but this has given both the knowledge and the motivation to go for a few more ambitious projects that I'd formerly not konwn where to start with. My mastery of audio design with regards to chip building has improved, and I think I'm a little wiser to circuits and conecting ground to power. :)
 
 ### OUT
-Considering my MVP, I intend to work on it further. It's a shame my little steel case didn't come in in time. When that arrives, I'll be soldering this all together and seating it in a wonderful custom stompbox.
+Considering my MVP, I intend to work on it further. It's a shame my little steel case didn't come in on time. When that arrives, I'll be soldering this all together and seating it in a wonderful custom stompbox.
